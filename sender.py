@@ -33,11 +33,7 @@ def send():
     time.sleep(3)
     # do moves
 
-    # sender has first move
-    next_move = receiver_move_list[0]
-    make_a_move(driver, next_move.xi, next_move.yi, next_move.xf, next_move.yf)
-
-    index = 1
+    index = 0
     setting_up = True
     while setting_up:
 
@@ -46,26 +42,36 @@ def send():
             time.sleep(0.01) # pls dont kill my cpu
             for entry in driver.get_log('performance'): # ick code
                 try:
-
                     message: dict = json.loads(entry['message'])['message']
-                    if message['method'] in ('Network.webSocketFrameReceived', 'Network.webSocketFrameSent'):
+                    if not is_websocket_data(message):
+                        continue
 
-                        payload: dict = json.loads(message['params']['response']['payloadData'])
+                    print("is a websocket")
 
-                        if payload["type"] == "takeTurnResponse":
+                    message: dict = json.loads(message['params']['response']['payloadData'])
 
-                            if payload["payload"]["previusPlayerIndex"] != 1:
-                                waiting_for_receiver = False
+                    print(str(type(message)) + "\n")
+                    print(str(message))
 
-                            print(payload)
-                            print("")
+                    if not is_take_turn_response(message):
+                        continue
+
+                    print("is a take turn response")
+                    print(str(type(message['payload']['previousPlayerIndex'])))
+
+                    if message['payload']['previousPlayerIndex'] == (0):
+                        print("lunas fwicken smart")
+                        waiting_for_receiver = False
                 except:
                     pass
 
-            # do next move
-            next_move = receiver_move_list[index]
-            make_a_move(driver, next_move.xi, next_move.yi, next_move.xf, next_move.yf)
-            index += 1
+        print("trying to send")
+
+        time.sleep(1)
+        # do next move
+        next_move = sender_move_list[index]
+        make_a_move(driver, next_move.xi, next_move.yi, next_move.xf, next_move.yf)
+        index += 1
 
 
 if __name__ == "__main__":
